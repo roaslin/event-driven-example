@@ -1,0 +1,107 @@
+version: '3.8'
+services:
+    api_videos:
+        build:
+            context: ./api_videos
+            dockerfile: Dockerfile.dev
+        restart: always
+        volumes:
+            - /app/node_modules
+            - ./api_videos:/app
+        ports:
+            - '9080:9080'
+        environment:
+            - HOST=localhost
+            - PORT=9080
+            - PGHOST=db_videos
+            - PGUSER=postgres
+            - PGUSERPSSWD=example
+            - VIDEOCREATEDQUEUEHOST=video_created_queue
+        depends_on:
+            - video_created_queue
+            - db_videos
+
+    api_videos_likes:
+        build:
+            context: ./api_videos_likes
+            dockerfile: Dockerfile.dev
+        restart: always
+        volumes:
+            - /app/node_modules
+            - ./api_videos_likes:/app
+        ports:
+            - '9081:9081'
+        environment:
+            - HOST=localhost
+            - PORT=9081
+            - PGHOST=db_likes
+            - PGPORT=5433
+            - PGUSER=postgres
+            - PGUSERPSSWD=example
+            - VIDEOLIKEDQUEUEHOST=video_liked_queue
+            - VIDEOLIKEDQUEUEPORT=5673
+        depends_on:
+            - video_liked_queue
+            - db_likes
+
+    # Db's        
+    db_videos:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: example
+        ports:
+            - 5432:5432
+        volumes:
+            - ./api_videos/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    db_likes:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: example
+            PGPORT: 5433
+        ports:
+            - 5433:5433
+        volumes:
+            - ./api_videos_likes/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    # db admin UI
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+        - 8080:8080
+
+    # Queues
+    # video created queue
+    video_created_queue:
+        image: rabbitmq:3.12.6-management-alpine
+        ports:
+            - 5672:5672
+            - 15672:15672
+    # video liked queue
+    video_liked_queue:
+        image: rabbitmq:3.12.6-management-alpine
+        ports:
+            - 5673:5672
+            - 15673:15672
+
+    # Consumers
+    consumer_videos_created:
+        build:
+            context: ./consumer_videos_created
+            dockerfile: Dockerfile.dev
+        volumes:
+            - /app/node_modules
+            - ./consumer_videos_created:/app
+        environment:
+            - QUEUEHOST=video_created_queue
+            - QUEUENAME=video_created
+            - PGHOST=db_likes
+            - PGUSER=postgres
+            - PGUSERPSSWD=example
+            - PGPORT=5433
+        depends_on:
+            - video_created_queue
+        restart: always
