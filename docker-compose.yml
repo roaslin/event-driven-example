@@ -1,4 +1,7 @@
 version: '3.8'
+networks:
+    my_network:
+        driver: bridge
 services:
     api_videos:
         build:
@@ -20,6 +23,8 @@ services:
         depends_on:
             - video_created_queue
             - db_videos
+        networks:
+            - my_network
 
     api_videos_likes:
         build:
@@ -43,6 +48,8 @@ services:
         depends_on:
             - video_liked_queue
             - db_likes
+        networks:
+            - my_network
 
     # Db's        
     db_videos:
@@ -54,6 +61,8 @@ services:
             - 5432:5432
         volumes:
             - ./api_videos/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+        networks:
+            - my_network
 
     db_likes:
         image: postgres
@@ -65,6 +74,8 @@ services:
             - 5433:5433
         volumes:
             - ./api_videos_likes/docker-entrypoint-initdb.d/init.sql:/docker-entrypoint-initdb.d/init.sql
+        networks:
+            - my_network
 
     # db admin UI
     adminer:
@@ -72,6 +83,8 @@ services:
         restart: always
         ports:
         - 8080:8080
+        networks:
+            - my_network
 
     # Queues
     # video created queue
@@ -80,12 +93,16 @@ services:
         ports:
             - 5672:5672
             - 15672:15672
+        networks:
+            - my_network
     # video liked queue
     video_liked_queue:
         image: rabbitmq:3.12.6-management-alpine
         ports:
             - 5673:5672
             - 15673:15672
+        networks:
+            - my_network
 
     # Consumers
     consumer_videos_created:
@@ -105,6 +122,8 @@ services:
         depends_on:
             - video_created_queue
         restart: always
+        networks:
+            - my_network
     consumer_videos_liked:
         build:
             context: ./consumer_videos_liked
@@ -122,3 +141,5 @@ services:
         depends_on:
             - video_liked_queue
         restart: always
+        networks:
+            - my_network
