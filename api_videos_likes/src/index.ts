@@ -1,7 +1,8 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import cors from 'cors';
-import { Pool } from 'pg';
+import { Connection, Pool } from 'pg';
+import amqp from 'amqplib';
 
 dotenv.config();
 
@@ -32,6 +33,10 @@ pool.on('error', (err, client) => {
     process.exit(-1);
 });
 
+// QUEUE CONFIG Video creation
+const queue = 'video_liked';
+const queueHost = process.env.VIDEOLIKEDQUEUEHOST;
+
 // Express
 app.use(cors()).use(express.json()).options('*', cors());
 
@@ -45,6 +50,7 @@ app.get('/health', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 app.patch('/likes/:videoId', async (req: Request, res: Response, next: NextFunction) => {
+    let connection;
     try {
         const videoId = req.params.videoId;
 
@@ -56,6 +62,15 @@ app.patch('/likes/:videoId', async (req: Request, res: Response, next: NextFunct
 
         const queryResult = await pool.query(text, values);
         console.log(queryResult.rows[0]);
+
+        //// enqueue VideoCreated
+        const videolikedEvent = { videoId: queryResult.rows[0].id };
+        connection = await amqp.connect(`amqp://${queueHost}`);
+        const channel = await connection.createChannel();
+        await channel.assertQueue(queue, { durable: false });
+        channel.sendToQueue(queue, Buffer.from(JSON.stringify(videolikedEvent)));
+        console.log(" [x] Sent '%s'", videolikedEvent);
+        await channel.close();
 
         return res.status(200).send('');
     } catch (error) {

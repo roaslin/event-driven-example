@@ -1,0 +1,26 @@
+{
+  "name": "api_videos_events",
+  "version": "1.0.0",
+  "description": "EMPTY",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "test": "set DEBUG=* && jest --testPathPattern=test --coverage"
+  },
+  "author": "roaslin",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.2",
+    "@types/pg": "^8.10.5",
+    "eslint": "^8.43.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}

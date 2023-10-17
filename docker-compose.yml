@@ -105,3 +105,20 @@ services:
         depends_on:
             - video_created_queue
         restart: always
+    consumer_videos_liked:
+        build:
+            context: ./consumer_videos_liked
+            dockerfile: Dockerfile.dev
+        volumes:
+            - /app/node_modules
+            - ./consumer_videos_liked:/app
+        environment:
+            - QUEUEHOST=video_liked_queue
+            - QUEUENAME=video_liked
+            - PGHOST=db_videos
+            - PGUSER=postgres
+            - PGUSERPSSWD=example
+            - PGPORT=5432
+        depends_on:
+            - video_liked_queue
+        restart: always
