@@ -1,5 +1,7 @@
 @startuml
 left to right direction
+actor user_videos
+actor user_likes
 rectangle api_videos
 queue queue_videos
 rectangle consumer_video_created
@@ -9,11 +11,13 @@ rectangle api_likes
 queue queue_likes
 rectangle consumer_video_liked
 
+user_videos -> api_videos
 api_videos -> queue_videos : [ produce VideoCreated ]
 api_videos -> db_videos : [ insert video ]
 queue_videos -> consumer_video_created : [ consume VideoCreated ]
 consumer_video_created -> db_likes : [ insert video ]
 
+user_likes -> api_likes
 api_likes -> db_likes
 api_likes -> queue_likes : [ produce VideoLiked ]
 queue_likes -> consumer_video_liked : [ consume VideoLiked ]
