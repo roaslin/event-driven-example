@@ -1,7 +1,22 @@
 @startuml
-Alice -> Bob: Authentication Request
-Bob --> Alice: Authentication Response
+left to right direction
+rectangle api_videos
+queue queue_videos
+rectangle consumer_video_created
+database db_videos
+database db_likes
+rectangle api_likes
+queue queue_likes
+rectangle consumer_video_liked
 
-Alice -> Bob: Another authentication Request
-Alice <-- Bob: Another authentication Response
+api_videos -> queue_videos : [ produce VideoCreated ]
+api_videos -> db_videos : [ insert video ]
+queue_videos -> consumer_video_created : [ consume VideoCreated ]
+consumer_video_created -> db_likes : [ insert video ]
+
+api_likes -> db_likes
+api_likes -> queue_likes : [ produce VideoLiked ]
+queue_likes -> consumer_video_liked : [ consume VideoLiked ]
+consumer_video_liked -> db_videos : [ update likes ]
+
 @endumld
